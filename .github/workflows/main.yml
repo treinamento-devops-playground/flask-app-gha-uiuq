@@ -17,6 +17,7 @@ on:
 env:
   AWS_REGION: "us-east-1" # set this to your preferred AWS region, e.g. us-west-1
   ECR_REPOSITORY: "devops-epic" # set this to your Amazon ECR repository name
+  REPO_NAME: ${{ github.repository }}
   ECS_SERVICE: "arn:aws:ecs:us-east-1:183461571101:service/devops_epic_cluster/devops-epic-service" # set this to your Amazon ECS service name
   ECS_CLUSTER: "arn:aws:ecs:us-east-1:183461571101:cluster/devops_epic_cluster" # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION:
@@ -51,11 +52,13 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ github.repository }}
         run: |
           # Build a docker container and
           # push it to ECR so that it can
           # be deployed to ECS.
+          ECR_REPOSITORY=$( echo $REPO_NAME | awk '{split($0, a, "/"); print a[1]}')
+          IMAGE_TAG=$( echo $REPO_NAME | awk '{split($0, a, "/"); print a[2]}')
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
